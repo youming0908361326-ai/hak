@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保險大富翁 — 客戶角色 × AI 引導顧問</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@600;700;900&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --font-body: 'Noto Sans TC', 'Helvetica Neue', sans-serif;
+  --font-display: 'Noto Serif TC', Georgia, serif;
+
+  --color-bg: #0d1b2a;
+  --color-surface: #1b2a3e;
+  --color-surface-2: #243752;
+  --color-surface-card: #1e3050;
+  --color-border: #2d4a6f;
+  --color-divider: #1a2d42;
+
+  --color-text: #e8eef5;
+  --color-text-muted: #8ba3b8;
+  --color-text-faint: #5a7185;
+
+  --color-primary: #4cc9f0;
+  --color-primary-hover: #38a8d4;
+  --color-gold: #f4c430;
+  --color-gold-soft: rgba(244, 196, 48, 0.15);
+  --color-success: #4caf50;
+  --color-danger: #e63946;
+  --color-warning: #ff9800;
+  --color-purple: #9c6ade;
+
+  --color-funds: #f4c430;
+  --color-protection: #4cc9f0;
+  --color-risk: #e63946;
+  --color-life: #4caf50;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 30px rgba(76, 201, 240, 0.15);
+
+  --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== BASE STYLES ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text);
+  background: var(--color-bg);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(76, 201, 240, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(244, 196, 48, 0.06) 0%, transparent 50%);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.2; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; color: inherit; }
+img { display: block; max-width: 100%; }
+
+/* ===== SCREEN SYSTEM ===== */
+.screen {
+  display: none;
+  min-height: 100vh;
+  animation: fadeIn 0.5s ease;
+}
+.screen.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(76, 201, 240, 0.3); }
+  50% { box-shadow: 0 0 25px rgba(76, 201, 240, 0.6); }
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.title-logo {
+  font-size: 80px;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+.title-main {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: var(--color-gold);
+  text-shadow: 0 2px 20px rgba(244, 196, 48, 0.3);
+  margin-bottom: 8px;
+}
+
+.title-sub {
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  color: var(--color-text-muted);
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+.title-description {
+  max-width: 560px;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 48px;
+  padding: 0 20px;
+}
+
+.title-description strong {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #0d1b2a;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(76, 201, 240, 0.3);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(76, 201, 240, 0.4); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--color-gold), #d4a017);
+  color: #0d1b2a;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(244, 196, 48, 0.3);
+}
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(244, 196, 48, 0.4); }
+
+.btn-ghost {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+.btn-ghost:hover { background: var(--color-surface-2); border-color: var(--color-primary); }
+
+.btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+
+/* ===== CHARACTER CREATION ===== */
+#character-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+#character-screen.active { display: flex; }
+
+.char-title {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  margin-bottom: 8px;
+}
+.char-sub {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+}
+
+.char-form {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow: var(--shadow-card);
+}
+
+.char-field { margin-bottom: 20px; }
+.char-field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.char-field input, .char-field select {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: var(--transition);
+}
+.char-field input:focus, .char-field select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1);
+}
+
+.char-preview {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.char-stat {
+  flex: 1;
+  min-width: 100px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  text-align: center;
+}
+.char-stat-label { font-size: 0.75rem; color: var(--color-text-faint); margin-bottom: 4px; }
+.char-stat-value { font-size: 1.2rem; font-weight: 700; }
+
+/* ===== GAME SCREEN LAYOUT ===== */
+#game-screen {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 16px;
+  gap: 16px;
+}
+#game-screen.active { display: flex; }
+
+/* Top bar */
+.game-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.topbar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.topbar-player {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  min-width: 120px;
+}
+
+.stat-icon { font-size: 1.1rem; }
+.stat-name { font-size: 0.75rem; color: var(--color-text-muted); }
+.stat-num {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Main game area */
+.game-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+/* Board section */
+.board-section {
+  flex: 1;
+  min-width: 320px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.board-header h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.position-badge {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  background: var(--color-bg);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+
+/* The board */
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.board-cell {
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px;
+  position: relative;
+  transition: var(--transition);
+  cursor: default;
+  border: 2px solid transparent;
+}
+
+.board-cell.visited {
+  opacity: 0.5;
+}
+
+.board-cell.current {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 20px rgba(244, 196, 48, 0.4);
+  animation: glow 2s ease-in-out infinite;
+}
+
+.cell-icon { font-size: 1.5rem; margin-bottom: 2px; }
+.cell-num { font-size: 0.65rem; color: var(--color-text-faint); font-weight: 700; }
+.cell-name { font-size: 0.6rem; color: var(--color-text-muted); line-height: 1.1; }
+
+/* Cell colors */
+.cell-start { background: linear-gradient(135deg, #2a4a3a, #1a3a2a); }
+.cell-income { background: linear-gradient(135deg, #3a3a1a, #2a2a1a); }
+.cell-invest { background: linear-gradient(135deg, #2a2a4a, #1a1a3a); }
+.cell-insurance { background: linear-gradient(135deg, #1a3a4a, #1a2a3a); }
+.cell-marriage { background: linear-gradient(135deg, #4a2a3a, #3a1a2a); }
+.cell-illness { background: linear-gradient(135deg, #4a3a2a, #3a2a1a); }
+.cell-cancer { background: linear-gradient(135deg, #4a1a2a, #3a0a1a); }
+.cell-accident { background: linear-gradient(135deg, #4a2a1a, #3a1a0a); }
+.cell-crash { background: linear-gradient(135deg, #3a1a3a, #2a0a2a); }
+.cell-advisor { background: linear-gradient(135deg, #1a3a4a, #0a2a3a); }
+
+/* Player token */
+.player-token {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.8rem;
+  z-index: 10;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+/* Dice area */
+.dice-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding-top: 12px;
+}
+
+.dice {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 900;
+  background: var(--color-surface-card);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border);
+  transition: var(--transition);
+}
+
+.dice.rolling {
+  animation: shake 0.3s ease-in-out infinite;
+}
+
+.dice-result {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  min-height: 20px;
+}
+
+/* Action panel */
+.action-panel {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Event panel */
+.event-section {
+  flex: 1;
+  min-width: 320px;
+  max-width: 480px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.event-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--color-text-faint);
+  text-align: center;
+  gap: 12px;
+}
+
+.event-empty-icon { font-size: 3rem; opacity: 0.3; }
+
+/* AI Advisor */
+.ai-advisor {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  animation: slideUp 0.4s ease;
+}
+
+.ai-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.ai-bubble {
+  flex: 1;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.ai-bubble strong { color: var(--color-primary); }
+
+.ai-label {
+  font-size: 0.7rem;
+  color: var(--color-text-faint);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+/* Event card */
+.event-card {
+  background: var(--color-surface-card);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--color-gold);
+  animation: slideUp 0.4s ease;
+}
+
+.event-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--color-gold);
+}
+
+.event-desc {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+/* Choices */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choice-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 18px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: var(--transition);
+  font-size: 0.9rem;
+}
+
+.choice-btn:hover {
+  background: var(--color-bg);
+  border-color: var(--color-primary);
+  transform: translateX(4px);
+}
+
+.choice-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.choice-title { font-weight: 600; color: var(--color-text); }
+.choice-hint { font-size: 0.75rem; color: var(--color-text-faint); }
+
+/* Result display */
+.result-card {
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 12px;
+  border: 1px solid var(--color-border);
+  animation: slideUp 0.3s ease;
+}
+
+.result-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-change.positive { background: rgba(76, 175, 80, 0.15); color: var(--color-success); }
+.stat-change.negative { background: rgba(230, 57, 70, 0.15); color: var(--color-danger); }
+.stat-change.neutral { background: var(--color-bg); color: var(--color-text-muted); }
+
+.result-text {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+}
+
+/* Continue button */
+.continue-btn {
+  margin-top: 16px;
+  width: 100%;
+}
+
+/* ===== FINAL REPORT ===== */
+#report-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+#report-screen.active { display: flex; }
+
+.report-container {
+  max-width: 640px;
+  width: 100%;
+}
+
+.report-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.report-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.report-title {
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 900;
+  color: var(--color-gold);
+  margin-bottom: 8px;
+}
+
+.report-subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.report-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.report-section {
+  margin-bottom: 24px;
+}
+
+.report-section:last-child { margin-bottom: 0; }
+
+.report-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-final-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.report-stat {
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+}
+
+.report-stat-label { font-size: 0.75rem; color: var(--color-text-faint); margin-bottom: 4px; }
+.report-stat-value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.report-evaluation {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--color-text-muted);
+}
+
+.report-evaluation strong { color: var(--color-text); }
+
+.report-advisor {
+  background: var(--color-surface-2);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.report-advisor-label {
+  font-size: 0.75rem;
+  color: var(--color-text-faint);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.report-advisor-text {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+.report-advisor-text strong { color: var(--color-primary); }
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .game-main { flex-direction: column; }
+  .event-section { max-width: none; max-height: none; }
+  .board { grid-template-columns: repeat(5, 1fr); }
+  .cell-name { display: none; }
+  .stats-bar { justify-content: center; }
+  .stat-pill { min-width: 100px; padding: 6px 12px; }
+}
+
+@media (max-width: 480px) {
+  .board { gap: 4px; }
+  .board-cell { padding: 4px; }
+  .cell-icon { font-size: 1.2rem; }
+  .cell-num { font-size: 0.55rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div class="screen active" id="title-screen">
+  <div class="title-logo">🎲</div>
+  <h1 class="title-main">保險大富翁</h1>
+  <p class="title-sub">第二版遊戲計劃書 ｜ 客戶角色 × AI 引導顧問</p>
+  <div class="title-description">
+    這是一款以「大富翁走格子」為核心的保險情境體驗遊戲。<br>
+    玩家扮演<strong>客戶</strong>，經歷收入、投資、結婚、生病、癌症、車禍、股災等人生情境，<br>
+    在不同階段面對保險與財務選擇。<br><br>
+    AI 扮演<strong>引導者＋顧問</strong>，協助你理解風險，但最後決策由你完成。
+  </div>
+  <button class="btn btn-gold" onclick="startGame()">開始遊戲 →</button>
+</div>
+
+<!-- ===== CHARACTER CREATION ===== -->
+<div class="screen" id="character-screen">
+  <h2 class="char-title">建立你的客戶角色</h2>
+  <p class="char-sub">填寫你的基本資料，遊戲會根據你的情況調整事件</p>
+  <div class="char-form">
+    <div class="char-field">
+      <label>姓名 / 暱稱</label>
+      <input type="text" id="char-name" placeholder="輸入你的名字" value="" maxlength="12">
+    </div>
+    <div class="char-field">
+      <label>年齡</label>
+      <select id="char-age">
+        <option value="22">22 歲（社會新鮮人）</option>
+        <option value="28" selected>28 歲（工作數年）</option>
+        <option value="35">35 歲（事業穩定期）</option>
+        <option value="45">45 歲（中年階段）</option>
+      </select>
+    </div>
+    <div class="char-field">
+      <label>月收入</label>
+      <select id="char-income">
+        <option value="35000">35,000 元（基本薪資）</option>
+        <option value="50000" selected>50,000 元（一般白領）</option>
+        <option value="80000">80,000 元（中高收入）</option>
+        <option value="120000">120,000 元（高收入）</option>
+      </select>
+    </div>
+    <div class="char-field">
+      <label>家庭狀況</label>
+      <select id="char-family">
+        <option value="single" selected>單身</option>
+        <option value="married_no_kids">已婚無小孩</option>
+        <option value="married_kids">已婚有小孩</option>
+      </select>
+    </div>
+    <div class="char-field">
+      <label>風險承受度</label>
+      <select id="char-risk">
+        <option value="low">低（穩健至上）</option>
+        <option value="medium" selected>中（適度承擔）</option>
+        <option value="high">高（積極進取）</option>
+      </select>
+    </div>
+    <div class="char-preview" id="char-preview">
+      <div class="char-stat"><div class="char-stat-label">資金</div><div class="char-stat-value" style="color:var(--color-funds)">100</div></div>
+      <div class="char-stat"><div class="char-stat-label">保障</div><div class="char-stat-value" style="color:var(--color-protection)">20</div></div>
+      <div class="char-stat"><div class="char-stat-label">風險</div><div class="char-stat-value" style="color:var(--color-risk)">50</div></div>
+      <div class="char-stat"><div class="char-stat-label">生活</div><div class="char-stat-value" style="color:var(--color-life)">80</div></div>
+    </div>
+    <div style="text-align:center; margin-top:24px;">
+      <button class="btn btn-primary" onclick="confirmCharacter()">確認角色，進入遊戲</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GAME SCREEN ===== -->
+<div class="screen" id="game-screen">
+  <div class="game-topbar">
+    <div>
+      <span class="topbar-title">保險大富翁</span>
+      <span class="topbar-player" id="topbar-player"></span>
+    </div>
+    <div class="stats-bar" id="stats-bar"></div>
+  </div>
+
+  <div class="game-main">
+    <!-- Board section -->
+    <div class="board-section">
+      <div class="board-header">
+        <h3>人生地圖</h3>
+        <span class="position-badge" id="position-badge">第 0 / 10 格</span>
+      </div>
+      <div class="board" id="board"></div>
+      <div class="dice-area">
+        <div class="dice" id="dice">🎲</div>
+        <div class="dice-result" id="dice-result">點擊下方按鈕擲骰子</div>
+      </div>
+      <div class="action-panel">
+        <button class="btn btn-gold" id="roll-btn" onclick="rollDice()">🎲 擲骰子</button>
+      </div>
+    </div>
+
+    <!-- Event section -->
+    <div class="event-section" id="event-section">
+      <div class="event-empty" id="event-empty">
+        <div class="event-empty-icon">🤖</div>
+        <p>擲骰子前進，<br>遇到人生事件時 AI 顧問會為你解說</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FINAL REPORT ===== -->
+<div class="screen" id="report-screen">
+  <div class="report-container">
+    <div class="report-header">
+      <div class="report-icon" id="report-icon">🤖</div>
+      <h2 class="report-title" id="report-title">AI 財務顧問報告</h2>
+      <p class="report-subtitle" id="report-subtitle">你的選擇讓你成為什麼樣的客戶？</p>
+    </div>
+
+    <div class="report-card">
+      <div class="report-section">
+        <div class="report-section-title">📊 最終數值</div>
+        <div class="report-final-stats" id="report-final-stats"></div>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">📝 決策回顧</div>
+        <div class="report-evaluation" id="report-evaluation"></div>
+      </div>
+      <div class="report-section">
+        <div class="report-section-title">🤖 AI 顧問分析</div>
+        <div class="report-advisor">
+          <div class="report-advisor-label">AI 引導顧問</div>
+          <div class="report-advisor-text" id="report-advisor-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-actions">
+      <button class="btn btn-gold" onclick="restartGame()">🔄 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== GAME DATA =====
+const BOARD_CELLS = [
+  { id: 0, name: '起點', icon: '🚀', class: 'cell-start', type: 'start' },
+  { id: 1, name: '薪資收入', icon: '💰', class: 'cell-income', type: 'salary' },
+  { id: 2, name: '投資', icon: '📈', class: 'cell-invest', type: 'investment' },
+  { id: 3, name: '保險規劃', icon: '🛡️', class: 'cell-insurance', type: 'insurance' },
+  { id: 4, name: '結婚', icon: '💍', class: 'cell-marriage', type: 'marriage' },
+  { id: 5, name: '生病', icon: '🤒', class: 'cell-illness', type: 'illness' },
+  { id: 6, name: '癌症', icon: '🏥', class: 'cell-cancer', type: 'cancer' },
+  { id: 7, name: '車禍', icon: '🚗', class: 'cell-accident', type: 'accident' },
+  { id: 8, name: '股災', icon: '📉', class: 'cell-crash', type: 'crash' },
+  { id: 9, name: 'AI顧問', icon: '🤖', class: 'cell-advisor', type: 'advisor' },
+];
+
+// ===== EVENTS =====
+const EVENTS = {
+  start: {
+    title: '歡迎來到保險大富翁',
+    desc: '你的人生旅程即將開始。在接下來的 10 格中，你會遇到各種人生事件，需要做出保險與財務選擇。記住：現在的選擇，會影響未來的自己。',
+    ai: '我是你的 AI 引導顧問。我會在你遇到事件時協助你理解情境、整理需求、提醒可能的風險。但最後的決定，仍然由你自己做。',
+    choices: [
+      { title: '準備好了，開始旅程', hint: '進入第一格', effects: {}, next: true }
+    ]
+  },
+  salary: {
+    title: '💰 薪資收入變化',
+    desc: '你獲得了一次加薪的機會！月薪調整後，你需要思考如何分配收入：保費支出與生活支出之間的平衡。',
+    ai: '收入增加了，這是檢視保障需求的好時機。收入越高，代表你失去收入的能力對家庭的影響越大。你可以思考：如果收入中斷，你目前的資金可以支撐多久？',
+    choices: [
+      {
+        title: '加碼保險保障',
+        hint: '提高保障，降低未來風險',
+        effects: { funds: -10, protection: +15, risk: -10 },
+        result: '你決定將部分收入用於增加保險保障。保費增加了，但你的保障程度明顯提升。'
+      },
+      {
+        title: '維持現狀，增加儲蓄',
+        hint: '保留資金，但風險承受不變',
+        effects: { funds: +15, protection: 0, risk: 0 },
+        result: '你選擇將多餘收入存起來。資金增加了，但保障程度沒有改變。'
+      },
+      {
+        title: '投資理財',
+        hint: '追求更高報酬，承擔更多風險',
+        effects: { funds: +5, protection: -5, risk: +10 },
+        result: '你將部分收入投入理財。有機會獲得更高報酬，但也承擔了更多風險。'
+      }
+    ]
+  },
+  investment: {
+    title: '📈 投資機會',
+    desc: '朋友介紹了一個投資機會，預期年化報酬率 8-12%，但有一定風險。你需要根據自己的風險承受度做決定。',
+    ai: '投資前，先問自己：如果這筆錢歸零，會影響你的生活嗎？你的保障是否足夠承受投資損失？投資和保險是互補的——保險守住底線，投資創造增值。',
+    choices: [
+      {
+        title: '投入較高比例資金',
+        hint: '追求高報酬，但風險也高',
+        effects: { funds: -15, protection: 0, risk: +20, life: -5 },
+        result: '你投入了較多資金。如果市場表現好，報酬可觀；但如果下跌，影響也較大。'
+      },
+      {
+        title: '適度投資，保留現金',
+        hint: '平衡風險與報酬',
+        effects: { funds: -5, protection: 0, risk: +5 },
+        result: '你選擇了穩健的投資策略，保留了部分現金作為緩衝。'
+      },
+      {
+        title: '不投資，先買保險',
+        hint: '優先保障，降低風險',
+        effects: { funds: -8, protection: +12, risk: -8 },
+        result: '你決定先建立保障基礎，再考慮投資。這是穩健的做法。'
+      }
+    ]
+  },
+  insurance: {
+    title: '🛡️ 保險規劃',
+    desc: '這是你第一次正式進行保險選擇。你可以選擇不同類型的保險組合，每種保險對你的保障程度和資金有不同的影響。',
+    ai: '選擇保險時，建議從「身故風險、醫療風險、意外風險、重大疾病」四個方向思考。不是買越多越好，而是買適合自己的。先評估你最擔心什麼風險，再對應選擇。',
+    choices: [
+      {
+        title: '完整保障方案',
+        hint: '壽險+醫療+意外+重疾',
+        effects: { funds: -25, protection: +30, risk: -25 },
+        result: '你建立了完整的保障網。雖然保費較高，但面對未來的風險事件時，你會有足夠的保護。'
+      },
+      {
+        title: '基本保障方案',
+        hint: '壽險+醫療',
+        effects: { funds: -12, protection: +15, risk: -12 },
+        result: '你建立了基本保障。醫療和身故風險有覆蓋，但意外和重疾仍有缺口。'
+      },
+      {
+        title: '只買意外險',
+        hint: '保費低，但保障有限',
+        effects: { funds: -3, protection: +5, risk: -3 },
+        result: '你只買了意外險。保費負擔輕，但如果遇到疾病或重大事件，保障可能不足。'
+      },
+      {
+        title: '暫時不買保險',
+        hint: '保留資金，但風險自負',
+        effects: { funds: +5, protection: -10, risk: +15 },
+        result: '你決定暫時不買保險，保留資金。但未來遇到事件時，你需要自行承擔所有風險。'
+      }
+    ]
+  },
+  marriage: {
+    title: '💍 結婚了',
+    desc: '恭喜！你步入婚姻。家庭責任增加，房貸、生活開支都翻倍。你的保險需求可能需要重新評估。',
+    ai: '結婚後，你的保障不再只關係到自己。如果收入中斷，另一半怎麼辦？建議重新檢視你的壽險保額是否足夠覆蓋家庭支出。家庭責任越大，壽險需求越高。',
+    choices: [
+      {
+        title: '增加壽險保額',
+        hint: '為家庭建立安全網',
+        effects: { funds: -10, protection: +12, risk: -12, life: +10 },
+        result: '你增加了壽險保額，確保即使發生意外，另一半也能維持生活。'
+      },
+      {
+        title: '購買配偶保險',
+        hint: '雙重保障',
+        effects: { funds: -8, protection: +8, risk: -8, life: +8 },
+        result: '你為配偶也購買了保險，建立了雙重保障。'
+      },
+      {
+        title: '暫不調整保險',
+        hint: '節省開支，但風險增加',
+        effects: { funds: +8, protection: -8, risk: +12, life: -5 },
+        result: '你選擇暫不調整保險。家庭責任增加了，但保障沒有跟上。'
+      }
+    ]
+  },
+  illness: {
+    title: '🤒 生病住院',
+    desc: '你因為生病住院了，醫療費用不少。你需要支付自費項目，同時暫時無法工作，收入受到影響。',
+    ai: '這正是考驗你之前保險規劃的時候。如果你之前購買了醫療險，現在可以理賠；如果沒有，你需要自費支付所有醫療費用。這就是為什麼我們之前提醒你要考慮醫療保障。',
+    choices: [
+      {
+        title: '使用醫療險理賠',
+        hint: '需要之前有買醫療險',
+        effects: { funds: -5, protection: -3, risk: +5, life: -10 },
+        result: '你的醫療險發揮了作用，大部分醫療費用由保險支付。你只需要負擔自費項目。',
+        condition: (s) => s.protection >= 25
+      },
+      {
+        title: '自費支付醫療費用',
+        hint: '沒有保險，全額自費',
+        effects: { funds: -30, protection: 0, risk: +15, life: -20 },
+        result: '你需要全額自費支付醫療費用。這對你的財務造成了不小的衝擊。',
+        condition: (s) => s.protection < 25
+      },
+      {
+        title: '選擇較便宜的治療方案',
+        hint: '降低支出，但恢復較慢',
+        effects: { funds: -12, protection: 0, risk: +8, life: -15 },
+        result: '你選擇了較便宜的治療方案。雖然省了錢，但恢復時間較長。'
+      }
+    ]
+  },
+  cancer: {
+    title: '🏥 確診重大疾病',
+    desc: '不幸確診癌症。這是一個重大的人生事件，需要長期治療、收入中斷，且醫療費用龐大。你之前的保險規劃將受到最大的考驗。',
+    ai: '重大疾病是保險規劃中最核心的考量之一。如果你之前購買了重大疾病險或實支實付醫療險，現在可以獲得一筆理賠金來支付治療費用。如果沒有，這將是巨大的財務壓力。記住：癌症治療通常需要 1-2 年，期間收入會大幅減少。',
+    choices: [
+      {
+        title: '使用重疾險理賠',
+        hint: '獲得一筆理賠金',
+        effects: { funds: +10, protection: -10, risk: -10, life: -25 },
+        result: '你的重大疾病險理賠了一筆金額，幫助你支付治療費用和維持生活。',
+        condition: (s) => s.protection >= 35
+      },
+      {
+        title: '動用積蓄治療',
+        hint: '沒有保險，全靠積蓄',
+        effects: { funds: -50, protection: 0, risk: +30, life: -35 },
+        result: '你沒有足夠的保險，只能動用積蓄。這對你的財務造成了嚴重打擊。',
+        condition: (s) => s.protection < 35
+      },
+      {
+        title: '減少治療支出',
+        hint: '選擇健保給付方案',
+        effects: { funds: -20, protection: 0, risk: +20, life: -30 },
+        result: '你選擇了健保給付的治療方案，減少了支出，但治療效果可能不如預期。'
+      }
+    ]
+  },
+  accident: {
+    title: '🚗 發生車禍',
+    desc: '你在通勤途中發生了車禍，受了傷需要休養。車輛也需要維修，這是一筆額外的支出。',
+    ai: '意外事件就是為什麼我們需要意外險。車禍不僅造成身體傷害，還有財產損失和收入中斷。如果你之前購買了意外險，可以獲得理賠；如果有第三人責任險，對方的損失也有保障。',
+    choices: [
+      {
+        title: '使用意外險理賠',
+        hint: '需要之前有買意外險',
+        effects: { funds: -8, protection: -5, risk: +5, life: -12 },
+        result: '你的意外險理賠了部分醫療和車輛維修費用，減輕了財務壓力。',
+        condition: (s) => s.protection >= 20
+      },
+      {
+        title: '全額自費',
+        hint: '沒有保險，全額負擔',
+        effects: { funds: -25, protection: 0, risk: +15, life: -18 },
+        result: '你沒有意外險，所有費用都需要自費。車輛維修和醫療費用加起來不少。',
+        condition: (s) => s.protection < 20
+      },
+      {
+        title: '向對方求償',
+        hint: '對方有責任，但需要時間',
+        effects: { funds: -10, protection: 0, risk: +8, life: -10 },
+        result: '你向對方保險公司求償，但理賠需要時間。先自己墊付部分費用。'
+      }
+    ]
+  },
+  crash: {
+    title: '📉 股災來襲',
+    desc: '全球股市大幅下跌，你的投資組合也受到影響。資產縮水，你需要決定如何應對。',
+    ai: '股災是測試你風險管理能力的時候。如果你之前配置了適當的保險，即使投資虧損，你的基本保障仍然在。這就是「保險守住底線，投資創造增值」的意義——保險確保即使投資失敗，你也不會跌到谷底。',
+    choices: [
+      {
+        title: '停損出場',
+        hint: '認賠殺出，保留現金',
+        effects: { funds: -20, protection: 0, risk: -5, life: -8 },
+        result: '你選擇停損，雖然虧損了，但保留了現金。風險降低，但也錯失了反彈機會。'
+      },
+      {
+        title: '加碼攤平',
+        hint: '逢低買入，但風險更高',
+        effects: { funds: -15, protection: 0, risk: +15, life: -5 },
+        result: '你選擇加碼。如果市場反彈，你可以更快回本；但如果繼續下跌，損失更大。'
+      },
+      {
+        title: '持有等待恢復',
+        hint: '不動作，等待市場回穩',
+        effects: { funds: -10, protection: 0, risk: +5, life: -3 },
+        result: '你選擇持有不動。短期有帳面虧損，但長期來說市場通常會恢復。'
+      }
+    ]
+  },
+  advisor: {
+    title: '🤖 AI 財務顧問報告',
+    desc: '你的人生旅程結束了。AI 顧問正在整理你一路上的決策，為你生成個人化分析報告...',
+    ai: '讓我回顧你這一路的選擇，分析你的決策模式、風險偏好和保障缺口。這份報告會幫助你了解：你的選擇讓你成為什麼樣的客戶？哪些風險是你目前最需要注意的？',
+    choices: [
+      { title: '查看完整報告', hint: '生成 AI 顧問分析', effects: {}, next: true, final: true }
+    ]
+  }
+};
+
+// ===== GAME STATE =====
+let gameState = {
+  playerName: '',
+  age: 28,
+  income: 50000,
+  family: 'single',
+  riskTolerance: 'medium',
+  position: 0,
+  funds: 100,
+  protection: 20,
+  risk: 50,
+  life: 80,
+  history: [],
+  hasRolled: false,
+  diceValue: 0,
+  pendingEvent: null,
+};
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ===== START GAME =====
+function startGame() {
+  showScreen('character-screen');
+}
+
+function confirmCharacter() {
+  const name = document.getElementById('char-name').value.trim() || '玩家';
+  gameState.playerName = name;
+  gameState.age = parseInt(document.getElementById('char-age').value);
+  gameState.income = parseInt(document.getElementById('char-income').value);
+  gameState.family = document.getElementById('char-family').value;
+  gameState.riskTolerance = document.getElementById('char-risk').value;
+
+  // Adjust starting stats based on character
+  if (gameState.age >= 45) { gameState.risk += 10; gameState.funds += 20; }
+  if (gameState.family === 'married_kids') { gameState.risk += 10; gameState.life -= 5; }
+  if (gameState.riskTolerance === 'high') { gameState.risk += 10; }
+  if (gameState.riskTolerance === 'low') { gameState.risk -= 5; }
+
+  document.getElementById('topbar-player').textContent = `｜ ${name} · ${gameState.age}歲`;
+  initBoard();
+  updateStats();
+  showScreen('game-screen');
+
+  // Show start event
+  showEvent('start');
+}
+
+// ===== BOARD INIT =====
+function initBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  BOARD_CELLS.forEach((cell, i) => {
+    const div = document.createElement('div');
+    div.className = `board-cell ${cell.class}`;
+    div.id = `cell-${i}`;
+    div.innerHTML = `
+      <div class="cell-icon">${cell.icon}</div>
+      <div class="cell-name">${cell.name}</div>
+      <div class="cell-num">${i + 1}</div>
+    `;
+    board.appendChild(div);
+  });
+  updateBoardPosition();
+}
+
+function updateBoardPosition() {
+  document.querySelectorAll('.board-cell').forEach((cell, i) => {
+    cell.classList.remove('current', 'visited');
+    if (i < gameState.position) cell.classList.add('visited');
+    if (i === gameState.position) cell.classList.add('current');
+  });
+  document.getElementById('position-badge').textContent = `第 ${gameState.position + 1} / 10 格`;
+}
+
+// ===== STATS DISPLAY =====
+function updateStats() {
+  const stats = [
+    { name: '資金', value: gameState.funds, icon: '💰', color: 'var(--color-funds)', key: 'funds' },
+    { name: '保障', value: gameState.protection, icon: '🛡️', color: 'var(--color-protection)', key: 'protection' },
+    { name: '風險', value: gameState.risk, icon: '⚠️', color: 'var(--color-risk)', key: 'risk' },
+    { name: '生活', value: gameState.life, icon: '🏠', color: 'var(--color-life)', key: 'life' },
+  ];
+  const bar = document.getElementById('stats-bar');
+  bar.innerHTML = stats.map(s => `
+    <div class="stat-pill">
+      <span class="stat-icon">${s.icon}</span>
+      <div>
+        <div class="stat-name">${s.name}</div>
+        <div class="stat-num" style="color:${s.color}" id="stat-${s.key}">${s.value}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== DICE ROLL =====
+function rollDice() {
+  const rollBtn = document.getElementById('roll-btn');
+  const dice = document.getElementById('dice');
+  const result = document.getElementById('dice-result');
+
+  rollBtn.disabled = true;
+  dice.classList.add('rolling');
+
+  // Animate dice
+  const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+  let count = 0;
+  const interval = setInterval(() => {
+    dice.textContent = faces[count % 6];
+    count++;
+  }, 100);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    dice.classList.remove('rolling');
+
+    // Determine steps (1-3 to progress through 10 cells)
+    const steps = Math.floor(Math.random() * 3) + 1;
+    dice.textContent = faces[steps - 1];
+    result.textContent = `擲出 ${steps} 點！`;
+
+    gameState.diceValue = steps;
+    movePlayer(steps);
+  }, 800);
+}
+
+// ===== MOVE PLAYER =====
+function movePlayer(steps) {
+  const diceResult = document.getElementById('dice-result');
+  let step = 0;
+
+  const moveInterval = setInterval(() => {
+    if (step < steps) {
+      if (gameState.position < 9) {
+        gameState.position++;
+        updateBoardPosition();
+      }
+      step++;
+    } else {
+      clearInterval(moveInterval);
+      diceResult.textContent = `抵達：${BOARD_CELLS[gameState.position].name}`;
+      setTimeout(() => {
+        triggerEvent(BOARD_CELLS[gameState.position].type);
+      }, 500);
+    }
+  }, 400);
+}
+
+// ===== EVENT SYSTEM =====
+function showEvent(eventType) {
+  const event = EVENTS[eventType];
+  const section = document.getElementById('event-section');
+
+  let choicesHtml = '';
+  if (event.choices) {
+    choicesHtml = '<div class="choices">' + event.choices.map((choice, i) => {
+      const disabled = choice.condition && !choice.condition(gameState);
+      const hint = disabled ? '（條件不足）' : (choice.hint || '');
+      return `<button class="choice-btn" ${disabled ? 'disabled' : ''} onclick="makeChoice('${eventType}', ${i})">
+        <span class="choice-title">${choice.title}</span>
+        <span class="choice-hint">${hint}</span>
+      </button>`;
+    }).join('') + '</div>';
+  }
+
+  section.innerHTML = `
+    <div class="ai-advisor">
+      <div class="ai-avatar">🤖</div>
+      <div class="ai-bubble">
+        <div class="ai-label">AI 引導顧問</div>
+        ${event.ai}
+      </div>
+    </div>
+    <div class="event-card">
+      <div class="event-title">${event.title}</div>
+      <div class="event-desc">${event.desc}</div>
+      ${choicesHtml}
+    </div>
+  `;
+  section.scrollTop = 0;
+}
+
+function triggerEvent(eventType) {
+  gameState.pendingEvent = eventType;
+  showEvent(eventType);
+}
+
+function makeChoice(eventType, choiceIndex) {
+  const event = EVENTS[eventType];
+  const choice = event.choices[choiceIndex];
+
+  // Apply effects
+  if (choice.effects) {
+    const changes = [];
+    const labels = { funds: '💰 資金', protection: '🛡️ 保障', risk: '⚠️ 風險', life: '🏠 生活' };
+    Object.entries(choice.effects).forEach(([key, val]) => {
+      if (val !== 0) {
+        gameState[key] += val;
+        gameState[key] = Math.max(0, Math.min(100, gameState[key]));
+        changes.push({ label: labels[key], value: val });
+      }
+    });
+
+    // Record history
+    gameState.history.push({
+      event: event.title,
+      choice: choice.title,
+      effects: choice.effects,
+      position: gameState.position
+    });
+
+    // Show result
+    const section = document.getElementById('event-section');
+    let changesHtml = changes.map(c =>
+      `<span class="stat-change ${c.value > 0 ? 'positive' : 'negative'}">${c.label} ${c.value > 0 ? '+' : ''}${c.value}</span>`
+    ).join('');
+
+    section.innerHTML = `
+      <div class="ai-advisor">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-bubble">
+          <div class="ai-label">AI 顧問回饋</div>
+          ${choice.result}
+        </div>
+      </div>
+      <div class="event-card">
+        <div class="event-title">📊 選擇結果</div>
+        <div class="stat-changes">${changesHtml || '<span class="stat-change neutral">數值無變化</span>'}</div>
+        <div class="result-text">${choice.result}</div>
+      </div>
+      <button class="btn btn-primary continue-btn" onclick="continueGame()">
+        ${choice.final ? '查看最終報告 →' : '繼續前進 →'}
+      </button>
+    `;
+
+    updateStats();
+    gameState.pendingEvent = null;
+
+    if (choice.final) {
+      // Will go to report when continue is clicked
+      gameState._goToReport = true;
+    }
+  } else if (choice.next) {
+    if (eventType === 'start') {
+      // Just clear and show empty
+      document.getElementById('event-section').innerHTML = `
+        <div class="event-empty">
+          <div class="event-empty-icon">🎲</div>
+          <p>擲骰子前進，<br>遇到人生事件時 AI 顧問會為你解說</p>
+        </div>
+      `;
+    }
+  }
+}
+
+function continueGame() {
+  if (gameState._goToReport) {
+    showFinalReport();
+    return;
+  }
+
+  // Reset dice
+  document.getElementById('dice').textContent = '🎲';
+  document.getElementById('dice-result').textContent = '點擊下方按鈕擲骰子';
+  document.getElementById('roll-btn').disabled = false;
+
+  // Check if game is over
+  if (gameState.position >= 9) {
+    showFinalReport();
+    return;
+  }
+
+  // Show empty event section
+  document.getElementById('event-section').innerHTML = `
+    <div class="event-empty">
+      <div class="event-empty-icon">🎲</div>
+      <p>擲骰子繼續前進</p>
+    </div>
+  `;
+}
+
+// ===== FINAL REPORT =====
+function showFinalReport() {
+  showScreen('report-screen');
+
+  // Determine player type
+  let playerType = '';
+  let evaluation = '';
+  let advisorText = '';
+
+  if (gameState.protection >= 50 && gameState.risk <= 30) {
+    playerType = '穩健保障型客戶';
+    evaluation = `你在整個遊戲中展現了<strong>優秀的風險管理能力</strong>。你重視保障，在關鍵時刻做出了明智的選擇，讓自己的風險維持在合理範圍內。`;
+    advisorText = `你是一位<strong>負責任的保障型客戶</strong>。你的選擇顯示你理解「保險不是買越多越好，而是買適合自己的」這個核心觀念。你建立了良好的保障基礎，在面對人生事件時能夠從容應對。<br><br>建議：繼續維持良好的保險習慣，定期檢視保障是否仍然符合現在的需求。人生階段變化時，記得重新評估。`;
+  } else if (gameState.protection >= 30 && gameState.risk <= 50) {
+    playerType = '平衡型客戶';
+    evaluation = `你在保障與資金之間取得了<strong>不錯的平衡</strong>。雖然還有進步空間，但整體表現穩定，展現了對風險的基本意識。`;
+    advisorText = `你是一位<strong>平衡型客戶</strong>，在保障和投資之間找到了不錯的平衡點。你的選擇顯示你有一定的風險意識，但在某些方面還可以再加強。<br><br>建議：檢視你是否在<strong>重大疾病和意外保障</strong>方面有足夠的覆蓋。如果之前的選擇偏重某一領域，可以考慮補強其他方面的保障。`;
+  } else if (gameState.funds >= 60 && gameState.protection < 25) {
+    playerType = '資金導向型客戶';
+    evaluation = `你傾向<strong>保留資金而減少保障</strong>。雖然短期內資金充裕，但面對重大風險事件時，可能會承受較大的財務衝擊。`;
+    advisorText = `你是一位<strong>資金導向型客戶</strong>。你偏好將資金保留在手中，但這也意味著當風險事件發生時，你需要自行承擔全部後果。<br><br>建議：強烈建議重新評估你的<strong>保障缺口</strong>。特別是重大疾病和意外保障，這些事件往往造成最大的財務衝擊。「保險守住底線」——即使投資獲利豐厚，一次重大事件也可能讓一切歸零。`;
+  } else {
+    playerType = '需要重新規劃的客戶';
+    evaluation = `你的保障程度偏低，風險偏高。建議<strong>重新審視你的保險規劃</strong>，特別是在重大疾病、意外和醫療保障方面。`;
+    advisorText = `根據你的決策記錄，你的<strong>保障缺口較大</strong>。在遊戲中遇到生病、癌症、車禍等事件時，你可能承受了較大的財務損失。這正說明了為什麼保險規劃如此重要。<br><br>建議：優先補強<strong>醫療險和重大疾病險</strong>，這兩項是應對突發健康風險的核心保障。其次考慮意外險和壽險，根據你的家庭責任調整保額。記住：「現在的選擇，會影響未來的自己。」`;
+  }
+
+  document.getElementById('report-title').textContent = `${playerType}`;
+  document.getElementById('report-subtitle').textContent = `${gameState.playerName}，你的選擇讓你成為什麼樣的客戶？`;
+
+  // Final stats
+  const finalStats = [
+    { label: '資金', value: gameState.funds, color: 'var(--color-funds)' },
+    { label: '保障', value: gameState.protection, color: 'var(--color-protection)' },
+    { label: '風險', value: gameState.risk, color: 'var(--color-risk)' },
+    { label: '生活', value: gameState.life, color: 'var(--color-life)' },
+  ];
+  document.getElementById('report-final-stats').innerHTML = finalStats.map(s => `
+    <div class="report-stat">
+      <div class="report-stat-label">${s.label}</div>
+      <div class="report-stat-value" style="color:${s.color}">${s.value}</div>
+    </div>
+  `).join('');
+
+  // Evaluation
+  document.getElementById('report-evaluation').innerHTML = evaluation;
+
+  // Advisor text
+  document.getElementById('report-advisor-text').innerHTML = advisorText;
+
+  // History summary in evaluation
+  let historyText = '<br><br><strong>📋 決策記錄：</strong><br>';
+  gameState.history.forEach((h, i) => {
+    historyText += `${i + 1}. ${h.event.replace(/[💰📈🛡️💍🤒🏥🚗📉🤖]/g, '').trim()} → ${h.choice}<br>`;
+  });
+  document.getElementById('report-evaluation').innerHTML += historyText;
+}
+
+// ===== RESTART =====
+function restartGame() {
+  gameState = {
+    playerName: '',
+    age: 28,
+    income: 50000,
+    family: 'single',
+    riskTolerance: 'medium',
+    position: 0,
+    funds: 100,
+    protection: 20,
+    risk: 50,
+    life: 80,
+    history: [],
+    hasRolled: false,
+    diceValue: 0,
+    pendingEvent: null,
+  };
+  document.getElementById('char-name').value = '';
+  showScreen('title-screen');
+}
+
+// ===== INIT =====
+// Preload fonts
+document.fonts.ready.then(() => {
+  console.log('Fonts loaded');
+});
+</script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://perplexity.localhost","http://localhost:1420","http://127.0.0.1:1420","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
